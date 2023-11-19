@@ -1,0 +1,147 @@
+﻿@page "/"
+@using CSCI2910Lab6.Data
+@using CSCI2910Lab6.Services
+@inject IBookService Library
+@inject IGroupingService Group
+
+<PageTitle>Manage Books</PageTitle>
+
+<h4>Add a Book</h4>
+
+Enter Book Title:<input @bind=bookTitle style="margin-left: 10px; margin-bottom: 5px;"/><br />
+Enter Author:<input @bind=author style="margin-left: 34px; margin-bottom: 5px;"/><br />
+Enter ISBN:<input @bind=isbn style="margin-left: 43px; margin-bottom: 5px;"/><br />
+<button @onclick=AddBook>Add</button> <br /><br />
+<p role="status">@response</p>
+
+<h4>Edit a Book</h4>
+<h5>Enter the ID of the book you want to update. If you don't want to update a section, leave it blank</h5>
+Enter Book ID:<input @bind=idToChange style="margin-left: 36px; margin-bottom: 5px;"/><br />
+Enter New Title:<input @bind=newBookTitle style="margin-left: 27px; margin-bottom: 5px;"/><br />
+Enter New Author:<input @bind=newAuthor style="margin-left: 10px; margin-bottom: 5px;"/><br />
+Enter New ISBN:<input @bind=newISBN style="margin-left: 19px; margin-bottom: 5px;"/><br />
+<button @onclick=UpdateBook>Update</button> <br /><br />
+<p role="status">@response2</p>
+
+<h4>Delete a Book</h4>
+<h5>Enter the ID of the book you want to delete</h5>
+Enter Book ID:<input @bind=idToDelete style="margin-left: 10px; margin-bottom: 5px;"/><br />
+<button @onclick=DeleteBook>Delete</button> <br /><br />
+<p role="status">@response3</p>
+
+<h4>Available Books</h4>
+<button @onclick=ListBooks>ListBooks</button> <br /><br />
+    <table>
+    <thead>
+        <tr>
+            <td style="width: 100px; height: 40px;">ID</td>
+            <td style="width: 100px; height: 40px;">Book Title</td>
+            <td style="width: 100px; height: 40px;">Author</td>
+            <td style="width: 100px; height: 40px;">ISBN</td>
+            <td style="width: 150px; height: 40px;">Copies Available</td>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (BookGroup bk in Group.BookGroups)
+        {
+            <tr>
+                <td style="width: 90px; height: 40px;">@bk.Book.Id</td>
+                <td style="width: 90px; height: 40px;">@bk.Book.Title</td>
+                <td style="width: 90px; height: 40px; padding-left: 10px">@bk.Book.Author</td>
+                <td style="width: 90px; height: 40px; padding-left: 10px">@bk.Book.ISBN</td>
+                <td style="width: 90px; height: 40px; padding-left: 10px">@bk.Count</td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@code {
+
+    
+    int id = 0;
+    string bookTitle = "";
+    string author = "";
+    string isbn = "";
+    string response = "";
+
+
+    public async Task AddBook()
+    {
+        if(bookTitle != "" && author != "" && isbn != "")
+        {
+            id = Library.Books.Any() ? Library.Books.Values.Max(b => b.Id) + 1 : 1;
+            Library.Books[id] = new Book()
+                {
+                    Id = id,
+                    Title = bookTitle,
+                    Author = author,
+                    ISBN = isbn,
+                };
+            response = "Book added successfully!";
+        }
+        ListBooks();
+    }
+    
+int idToChange = 0;
+string newBookTitle = "";
+string newAuthor = "";
+string newISBN = "";
+string response2 = "";
+    public async Task UpdateBook()
+    {
+        Book book = Library.Books.FirstOrDefault(b => b.Value.Id == idToChange).Value;
+
+				if (book != null) 
+                    {
+					    if (!string.IsNullOrEmpty(newBookTitle)) book.Title = newBookTitle;
+
+					    if (!string.IsNullOrEmpty(newAuthor)) book.Author = newAuthor;
+
+					    if (!string.IsNullOrEmpty(newISBN)) book.ISBN = newISBN;
+
+					response2 = "Book updated successfully!";
+                    ListBooks();
+				}
+				else {
+					response2 = "Book not found!";
+				}
+        
+    }
+
+int idToDelete = 0;
+string response3 = "";
+    public async Task DeleteBook()
+    {
+       Book book = Library.Books.FirstOrDefault(b => b.Value.Id == idToDelete).Value;
+
+				if (book != null) 
+                {
+					Library.Books.Remove(book.Id);
+					response3 = "Book deleted successfully!";
+                    ListBooks();
+				}
+				else 
+                {
+					response3 = "Book not found!";
+				}
+            
+    }
+
+
+    
+
+    public async Task ListBooks()
+    {
+        Group.BookGroups = Library.Books
+        .GroupBy(b => (b.Value.Title, b.Value.Author, b.Value.ISBN))
+        .Select(BookGroups => new BookGroup
+        {
+            Book = BookGroups.First().Value, 
+            Count = BookGroups.Count()
+        })
+        .ToList();
+
+    }
+}
+
+

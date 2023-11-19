@@ -1,0 +1,138 @@
+﻿@page "/borrow"
+@using CSCI2910Lab6.Data
+@using CSCI2910Lab6.Services
+@inject IBorrowedService Borrower
+@inject IBookService Library
+@inject IUserService Peeps
+@inject IGroupingService Group
+
+
+<PageTitle>Borrow</PageTitle>
+
+<h4>Borrow a Book</h4> <br />
+
+<h5>Available Books</h5>
+    <table>
+    <thead>
+        <tr>
+            <td style="width: 100px; height: 40px;">ID</td>
+            <td style="width: 100px; height: 40px;">Book Title</td>
+            <td style="width: 100px; height: 40px;">Author</td>
+            <td style="width: 100px; height: 40px;">ISBN</td>
+            <td style="width: 150px; height: 40px;">Copies Available</td>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (BookGroup bk in Group.BookGroups)
+        {
+            <tr>
+                <td style="width: 100px; height: 40px;">@bk.Book.Id</td>
+                <td style="width: 100px; height: 40px;">@bk.Book.Title</td>
+                <td style="width: 100px; height: 40px;">@bk.Book.Author</td>
+                <td style="width: 100px; height: 40px;">@bk.Book.ISBN</td>
+                <td style="width: 100px; height: 40px;">@bk.Count</td>
+            </tr>
+        }
+    </tbody>
+</table> <br />
+
+
+
+Enter ID of Book to Borrow:<input @bind=bookID style="margin-left: 10px; margin-bottom: 5px;"/><br /><br /><br />
+
+<h5>Registered Users</h5>
+    <table>
+    <thead>
+        <tr>
+            <td style="width: 100px; height: 40px;">User Name</td>
+            <td style="width: 100px; height: 40px;">Email</td>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach(var kvp in Peeps.Users)
+        {
+            <tr>
+                <td style="width: 100px; height: 40px;">@kvp.Value.Id</td>
+                <td style="width: 100px; height: 40px;">@kvp.Value.Name</td>
+                <td style="width: 100px; height: 40px;">@kvp.Value.Email</td>
+            </tr>
+        }
+    </tbody>
+</table> <br /> 
+
+Enter ID of User:<input @bind=userID style="margin-left: 10px; margin-bottom: 5px;"/><br />
+<button @onclick=BorrowBook>Execute</button> <br /><br />
+<p role="status">@response</p>
+
+
+
+@code {
+
+int bookID = 0;
+int userID = 0;
+string response = "";
+    
+
+    public async Task BorrowBook()
+    {
+
+		try
+        {
+            if (bookID <= 0 || userID <= 0)
+            {
+                response = "Invalid book ID or user ID.";
+                return;
+            }
+                
+                Book book = Library.Books.FirstOrDefault(b => b.Value.Id == bookID).Value;
+
+				if (book != null && Library.Books.Count(b => b.Value.Id == bookID) > 0) 
+				{
+
+						User user = Peeps.Users.FirstOrDefault(u => u.Value.Id == userID).Value;
+
+						if (user != null) 
+						{
+							if (!Borrower.borrowedBooks.ContainsKey(user)) 
+							{
+								Borrower.borrowedBooks[user] = new List<Book>();
+							}
+							Borrower.borrowedBooks[user].Add(book);
+							Library.Books.Remove(bookID);
+							response = "Book borrowed successfully!";
+
+                            ListBooks();
+						}
+						else 
+						{
+							response = "User not found!";
+						}
+					
+				}
+				else 
+				{
+					response = "Book not found or no available copies!";
+				}
+        }
+        catch (Exception ex)
+        {
+            response = "An error occurred: " + ex.Message;
+        }
+			
+    }
+
+    public async Task ListBooks()
+    {
+        Group.BookGroups = Library.Books
+        .GroupBy(b => b.Value.Title)
+        .Select(BookGroups => new BookGroup
+        {
+            Book = BookGroups.First().Value, 
+            Count = BookGroups.Count()
+        })
+        .ToList();
+
+    }
+}
+
+

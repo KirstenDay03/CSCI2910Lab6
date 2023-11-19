@@ -1,0 +1,112 @@
+﻿@page "/users"
+@using CSCI2910Lab6.Data
+@using CSCI2910Lab6.Services
+@inject IUserService Peeps
+
+<PageTitle>Manage Users</PageTitle>
+
+<h4>Add User</h4>
+
+Enter User Name:<input @bind=userName style="margin-left: 10px; margin-bottom: 5px;"/><br />
+Enter Email:<input @bind=userEmail style="margin-left: 51px; margin-bottom: 5px;"/><br />
+<button @onclick=AddUser>Add</button> <br /><br />
+<p role="status">@response</p>
+
+<h4>Edit a User</h4>
+<h5>Enter the ID of the User you want to update. If you don't want to update a section, leave it blank</h5>
+Enter User ID:<input @bind=idToChange style="margin-left: 34px; margin-bottom: 5px;"/><br />
+Enter New Name:<input @bind=newName style="margin-left: 10px; margin-bottom: 5px;"/><br />
+Enter New Email:<input @bind=newEmail style="margin-left: 12px; margin-bottom: 5px;"/><br />
+<button @onclick=UpdateUser>Update</button> <br /><br />
+<p role="status">@response2</p>
+
+<h4>Delete a User</h4>
+<h5>Enter the ID of the User you want to delete</h5>
+Enter User ID:<input @bind=idToDelete style="margin-left: 10px; margin-bottom: 5px;"/><br />
+<button @onclick=DeleteUser>Delete</button> <br /><br />
+<p role="status">@response3</p>
+
+<h4>List of Users</h4>
+    <table>
+    <thead>
+        <tr>
+            <td style="width: 100px; height: 40px;">User ID</td>
+            <td style="width: 100px; height: 40px;">User Name</td>
+            <td style="width: 100px; height: 40px;">Email</td>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach(var kvp in Peeps.Users)
+        {
+            <tr>
+                <td style="width: 100px; height: 40px;">@kvp.Value.Id</td>
+                <td style="width: 100px; height: 40px;">@kvp.Value.Name</td>
+                <td style="width: 100px; height: 40px; padding-left: 10px">@kvp.Value.Email</td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@code {
+    int id = 0;
+    string userName = "";
+    string userEmail = "";
+    string response = "";
+
+    public async Task AddUser()
+    {
+        id = Peeps.Users.Any() ? Peeps.Users.Values.Max(u => u.Id) + 1 : 1;
+        if(userName != "" && userEmail != "")
+        {
+            Peeps.Users[id] = new User()
+                {
+                    Id = id,
+                    Name = userName,
+                    Email = userEmail,
+                };
+            response = "User added successfully!";
+        }
+    }
+    
+int idToChange = 0;
+string newName = "";
+string newEmail = "";
+string response2 = "";
+
+    public async Task UpdateUser()
+    {
+       User user = Peeps.Users.FirstOrDefault(u => u.Value.Id == idToChange).Value;
+
+				if (user != null) 
+                {	
+					if (!string.IsNullOrEmpty(newName)) user.Name = newName;
+
+					if (!string.IsNullOrEmpty(newEmail)) user.Email = newEmail;
+
+					response2 = "User updated successfully!";
+				}
+				else 
+                {
+					response2 = "User not found!";
+				}
+    }
+
+int idToDelete = 0;
+string response3 = "";
+    public async Task DeleteUser()
+    {
+        User user = Peeps.Users.FirstOrDefault(u => u.Value.Id == idToDelete).Value;
+
+				if (user != null) 
+                {
+					Peeps.Users.Remove(user.Id);
+				    response3 = "User deleted successfully!";
+				}
+				else 
+                {
+					response3 = "User not found!";
+				}
+    }
+}
+
+

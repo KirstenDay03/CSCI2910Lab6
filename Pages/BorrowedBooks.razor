@@ -1,0 +1,38 @@
+﻿@page "/borrowedBooks"
+@using CSCI2910Lab6.Data
+@using CSCI2910Lab6.Services
+@inject IBorrowedService Borrower
+<PageTitle>Borrowed Books</PageTitle>
+
+
+<h4>All Borrowed Books</h4>
+
+    <table>
+	<thead>
+		<tr>
+			<td style="width: 100px; height: 40px;">User</td>
+			<td>Books</td>
+		</tr>
+	</thead>
+	<tbody>
+		@foreach (var entry in Borrower.borrowedBooks) 
+		{
+			<tr>
+				<td style="width: 100px; height: 40px;">@entry.Key.Name</td>
+			</tr>
+			@foreach (var book in entry.Value) 
+			{
+				<tr>
+					<td style="width: 100px; height: 40px;"></td>
+					<td style="width: 150px; height: 40px;">Title: @book.Title</td>
+					<td style="width: 150px; height: 40px;">Author: @book.Author</td>
+					<td style="width: 150px; height: 40px;">ISBN: @book.ISBN</td>
+				</tr>
+			}
+		
+		}
+	</tbody>
+</table>
+
+
+

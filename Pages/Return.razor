@@ -1,0 +1,104 @@
+﻿@page "/return"
+@using CSCI2910Lab6.Data
+@using CSCI2910Lab6.Services
+@inject IBorrowedService Borrower
+@inject IBookService Library
+@inject IUserService Peeps
+
+<PageTitle>Return Books</PageTitle>
+
+
+
+<h4>Return a Book</h4> <br />
+
+<h5>Users with Books Out</h5>
+<table>
+	<thead>
+		<tr>
+			<td style="width: 100px; height: 40px;">User ID</td>
+			<td style="width: 100px; height: 40px;">User Name</td>
+		</tr>
+	</thead>
+	<tbody>
+		@foreach (var entry in Borrower.borrowedBooks) 
+		{
+			<tr>
+				<td style="width: 100px; height: 40px;">@entry.Key.Id</td>
+				<td style="width: 100px; height: 40px;">@entry.Key.Name</td>
+			</tr>
+		
+		}
+	</tbody>
+</table> <br/>
+
+<h6>Enter the ID of the User who has a book to return</h6>
+Enter User ID:<input @bind=userId style="margin-left: 10px; margin-bottom: 5px;"/><br /><br/><br/>
+
+<h5>Books checked out to chosen User</h5>
+
+<table>
+	<thead>
+		<tr>
+			<td style="width: 100px; height: 40px;">Book Name</td>
+			<td style="width: 100px; height: 40px;">Book Author</td>
+			<td style="width: 100px; height: 40px;">Book ISBN</td>
+		</tr>
+	</thead>
+	<tbody>
+		@foreach (var entry in Borrower.borrowedBooks) 
+		{
+			if(entry.Key.Id == userId)
+			{
+				@foreach (var book in entry.Value) 
+				{
+					<tr>
+						<td style="width: 150px; height: 40px;">Title: @book.Title</td>
+						<td style="width: 150px; height: 40px;">Author: @book.Author</td>
+						<td style="width: 150px; height: 40px;">ISBN: @book.ISBN</td>
+					</tr>
+				}
+			}
+		}
+	</tbody>
+</table><br/>
+
+<h5>Enter the Number  of the book to return</h5>
+Enter Book Number:<input @bind=bookNumber style="margin-left: 10px; margin-bottom: 5px;"/><br />
+<button @onclick=ReturnBook>Return</button> <br /><br />
+<p role="status">@response</p>
+
+
+@code 
+{
+int userId = 0;
+int bookNumber = 0;
+string response = "";
+
+    public async Task ReturnBook()
+    {
+        User user = Peeps.Users.FirstOrDefault(u => u.Value.Id == userId).Value;
+
+				if (user != null && Borrower.borrowedBooks.ContainsKey(user) && Borrower.borrowedBooks[user].Count > 0) {
+
+					if (bookNumber >= 1 && bookNumber <= Borrower.borrowedBooks[user].Count) {
+						
+						Book bookToReturn = Borrower.borrowedBooks[user][bookNumber - 1];
+
+						Borrower.borrowedBooks[user].RemoveAt(bookNumber - 1);
+						Library.Books.Add(bookToReturn.Id, bookToReturn);
+
+						response = "Book returned successfully!";
+					}
+					else {
+						response = "Invalid input!";
+					}
+				}
+				else {
+					response = "User not found or no borrowed books!";
+				}
+    }
+    
+    
+}
+
+
